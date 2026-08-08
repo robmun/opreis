@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reisapp — familie</title>
+<meta name="theme-color" content="#12343B">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- ==========================================================================
+     REISAPP TEMPLATE
+     Eén bestand. Geen server, geen build. Openen in elke browser.
+     Je past alleen het blok TRIP hieronder aan; de rest hoeft nooit meer.
+     ========================================================================== -->
+
+<script>
+/* ==========================================================================
+   1. VUL HIER JE REIS IN
+   ==========================================================================
+   Volgorde van invullen die het snelst werkt:
+     trip  ->  stops  ->  flights  ->  bookings  ->  travelers
+   Alles wat je leeg laat ("" of []) verdwijnt automatisch uit het scherm.
+   ========================================================================== */
+
+const TRIP = {
+
+  /* ---- 1a. Kop van de reis ---------------------------------------------- */
+  trip: {
+    title:    "Brazilië",
+    subtitle: "Rio · Pantanal · Amazone · Iguaçu · Bahia",
+    start:    "2026-07-11",          // vertrekdag, altijd JJJJ-MM-DD
+    end:      "2026-08-05",          // thuiskomstdag
+    organiser:"Tenzing Travel",      // laat leeg als je zelf boekt: ""
+    emergency: [                     // verschijnt onderaan tab Reizigers
+      { label: "Alarmnummer Brazilië",        value: "190 (politie) / 192 (ambulance)" },
+      { label: "Nederlandse ambassade",       value: "+55 61 3961 3200", tel: "+556139613200" },
+      { label: "Ideia Tours (ma–vr overdag)", value: "+55 81 2128 0900", tel: "+558121280900" },
+      { label: "Ideia Tours buiten kantoor",  value: "+55 81 99965 6809", tel: "+5581999656809" },
+      { label: "Blokkeren pinpas",            value: "+31 800 0313", tel: "+318000313" }
+    ]
+  },
+
+  /* ---- 1b. Stops: elke plaats waar je slaapt ----------------------------
+     lat/lng: haal je in 3 seconden uit Google Maps (rechtermuisknop op de
+     plek -> de coördinaten staan bovenaan het menu, klik = gekopieerd).
+     'todo' is je eigen shortlist. Elk item krijgt automatisch zoekknoppen naar
+     GetYourGuide, Tripadvisor, Viator en Google Maps. Vul je 'url' in met de
+     link van de tour die je hebt gekozen, dan komt er een Boeken-knop bij.
+  ------------------------------------------------------------------------ */
+  stops: [
+    {
+      name: "Rio de Janeiro",
+      from: "2026-07-12", to: "2026-07-16",
+      lat: -22.9711, lng: -43.1822,
+      stay: {
+        name: "Copa Sul Hotel",
+        board: "2 TPL standaard · ontbijt inbegrepen",
+        address: "Av. Nossa Senhora de Copacabana 1284, Rio de Janeiro",
+        phone: "+55 21 3202 9450",
+        res: "1485598 - 1485601",
+        checkin: "15:00", checkout: "12:00",
+        url: "https://www.google.com/maps/search/?api=1&query=Copa+Sul+Hotel+Copacabana",
+        note: "Early check-in en ontbijt zijn inbegrepen bij aankomst. Mogelijk moet je na 12:00 nog van kamer wisselen."
+      },
+      intro: "Aankomst na de nachtvlucht. Vier dagen stad: Christusbeeld, Suikerbroodberg, stranden.",
+      todo: [
+        { title: "Corcovado & Christusbeeld", note: "Vroeg boeken, ga bij helder weer.", url: "" },
+        { title: "Kabelbaan Suikerbroodberg", note: "Twee etappes. Pas op met aapjes bovenop." },
+        { title: "Escadaria Selarón & Santa Teresa", note: "Met de gele tram vanaf metro Carioca." },
+        { title: "Jardim Botânico", note: "Rust midden in de stad, 2500 orchideeën." },
+        { title: "Maracanã stadion", note: "Rondleiding of wedstrijd; speelschema pas kort van tevoren bekend." },
+        { title: "Hippiemarkt Ipanema", note: "Alleen zondag, Praça General Osório, 09:00–18:00." }
+      ]
+    },
+    {
+      name: "Pantanal",
+      from: "2026-07-16", to: "2026-07-19",
+      lat: -20.2420, lng: -56.3780,
+      stay: {
+        name: "Fazenda San Francisco",
+        board: "2 TPL · 4D/3N volpension + excursies",
+        address: "Rod. BR-262 km 586, Miranda (MS)",
+        phone: "+55 67 3242 1088",
+        wa: "+55 67 99964 3929",
+        res: "RES051848-9889",
+        checkin: "16:00", checkout: "13:30",
+        url: "https://www.google.com/maps/search/?api=1&query=Fazenda+San+Francisco+Miranda",
+        note: "Receptie dicht tussen 22:00 en 05:00, dan geen in- of uitgang. Geef je aankomsttijd door via WhatsApp. Excursies zijn in het Portugees, geen Engelstalige gids. Meenemen: wandelschoenen, verrekijker, regenjas, zwemkleding, muggenspray."
+      },
+      intro: "Wetland zo groot als vijf keer Nederland. Safari te voet, per boot en met de jeep.",
+      todo: [
+        { title: "Nachttour per 4WD", note: "Miereneters, vossen, kaaimannen." },
+        { title: "Boottocht Miranda-rivier", note: "Zwemvest verplicht." },
+        { title: "Paardrijden als Pantaneiro", note: "Ook goed te doen zonder ervaring." },
+        { title: "Piranha vissen", note: "Zit in het arrangement." },
+        { title: "Wandeling door het moeras", note: "In juli kurkdroog, dus goed te lopen." }
+      ]
+    },
+    {
+      name: "Manaus",
+      from: "2026-07-19", to: "2026-07-20",
+      lat: -3.1019, lng: -60.0250,
+      stay: {
+        name: "Blue Tree Premium Manaus",
+        board: "2 DBL + 1 TWIN superior · ontbijt inbegrepen",
+        address: "Av. Umberto Calderaro Filho 817, Adrianópolis, Manaus",
+        phone: "+55 92 3303 2015",
+        res: "RES082934-1067 · RES082983-1067",
+        checkin: "14:00", checkout: "12:00",
+        url: "https://www.google.com/maps/search/?api=1&query=Blue+Tree+Premium+Manaus",
+        note: "Aankomst 01:30 's nachts."
+      },
+      intro: "Tussenstop op weg naar de jungle. Poort naar de Amazone.",
+      todo: [
+        { title: "Teatro Amazonas", note: "Van buiten al de moeite waard." },
+        { title: "Mercado Adolpho Lisboa", note: "Overdekte markt aan de haven." }
+      ]
+    },
+    {
+      name: "Amazone — Juma / Mamori",
+      from: "2026-07-20", to: "2026-07-24",
+      lat: -3.6300, lng: -60.3300,
+      stay: {
+        name: "Amazon Eco Lodge",
+        board: "2 TPL superior · 5D/4N volpension + excursies",
+        address: "Kantoor Manaus: Rua Domingos Leite 501",
+        phone: "+55 92 99362 8984",
+        res: "ET3461",
+        checkin: "", checkout: "",
+        url: "",
+        note: "Bagage naar de lodge is beperkt tot ca. 10 kg per persoon; de rest laat je gratis achter bij het kantoor in Manaus. Alleen water en sap bij de maaltijden, andere drankjes niet inbegrepen. Engelstalige gids bij de activiteiten. Geen bereik — zet deze app vooraf offline."
+      },
+      intro: "Vier dagen jungle: kano's, samenkomst Rio Negro en Solimões, caiman spotten, piranha vissen.",
+      todo: [
+        { title: "Paddeltocht overstroomd bos", note: "Igarapés & igapós, vlak na aankomst." },
+        { title: "Caiman spotten na zonsondergang", note: "Met zaklampen vanaf de boot." },
+        { title: "Visit Caboclo", note: "Bezoek aan een lokale familie, maniok en tropisch fruit." },
+        { title: "Zonsopgangtocht per kano", note: "Vertrek nog vóór het licht wordt." }
+      ]
+    },
+    {
+      name: "Manaus (2e keer)",
+      from: "2026-07-24", to: "2026-07-25",
+      lat: -3.1019, lng: -60.0250,
+      stay: {
+        name: "Blue Tree Premium Manaus",
+        board: "2 DBL + 1 TWIN superior · ontbijt inbegrepen",
+        address: "Av. Umberto Calderaro Filho 817, Adrianópolis, Manaus",
+        phone: "+55 92 3303 2015",
+        res: "RES083027-1067 · RES082941-1067",
+        checkin: "14:00", checkout: "12:00",
+        url: "https://www.google.com/maps/search/?api=1&query=Blue+Tree+Premium+Manaus",
+        note: "Laatste avond samen met Maura & Thijs."
+      },
+      intro: "Eén nacht terug in de stad. Hier splitst de groep zich.",
+      todo: []
+    },
+    {
+      name: "Foz do Iguaçu",
+      from: "2026-07-25", to: "2026-07-28",
+      lat: -25.5960, lng: -54.4900,
+      stay: {
+        name: "Vivaz Cataratas Resort",
+        board: "1 DBL + 1 TWIN standaard · ontbijt inbegrepen",
+        address: "Av. das Cataratas 6798, Tamanduá, Foz do Iguaçu",
+        phone: "+55 45 3026 0403",
+        res: "RES121243-2642",
+        checkin: "15:00", checkout: "12:00",
+        url: "https://www.google.com/maps/search/?api=1&query=Vivaz+Cataratas+Foz+do+Iguacu",
+        note: "Aankomst 00:05 's nachts."
+      },
+      intro: "Watervallen van vier kanten: Braziliaanse zijde, Argentijnse zijde, van onderaf en van bovenaf.",
+      todo: [
+        { title: "Argentijnse zijde", note: "Plan hier de meeste tijd, meer paden en dichterbij." },
+        { title: "Trein naar de Duivelskeel", note: "Vanaf het Visitor Centre." },
+        { title: "Boottocht onder de watervallen", note: "Je wordt gegarandeerd kletsnat." },
+        { title: "Helikoptervlucht", note: "Alleen mogelijk aan Braziliaanse zijde." },
+        { title: "Drielandenpunt", note: "Vanuit Puerto Iguazú." }
+      ]
+    },
+    {
+      name: "Salvador da Bahia",
+      from: "2026-07-28", to: "2026-07-31",
+      lat: -12.9850, lng: -38.5140,
+      stay: {
+        name: "Hotel da Bahia by Wish",
+        board: "1 DBL + 1 TWIN superior · ontbijt inbegrepen",
+        address: "Avenida Sete de Setembro 1537, Campo Grande, Salvador",
+        phone: "+55 71 3021 6700",
+        res: "RES104516-3615 · RES104415-3615",
+        checkin: "15:00", checkout: "12:00",
+        url: "https://www.google.com/maps/search/?api=1&query=Wish+Hotel+da+Bahia+Salvador",
+        note: ""
+      },
+      intro: "Culturele hoofdstad van Brazilië: capoeira, Pelourinho, drumgroepen.",
+      todo: [
+        { title: "Pelourinho", note: "Unesco-centrum, bruist dag en nacht." },
+        { title: "Elevador Lacerda", note: "30 seconden naar de benedenstad en de Mercado Modelo." },
+        { title: "Igreja do São Francisco", note: "Van binnen helemaal met goud bewerkt." },
+        { title: "Feira São Joaquim", note: "10 minuten rijden, exotisch fruit en souvenirs." },
+        { title: "Forte Santo Antônio da Barra", note: "Uit 1698, met zeevaartmuseum." }
+      ]
+    },
+    {
+      name: "Praia do Forte / Itacimirim",
+      from: "2026-07-31", to: "2026-08-04",
+      lat: -12.6600, lng: -38.0500,
+      stay: {
+        name: "Pousada Praia das Ondas",
+        board: "2 DBL standaard · ontbijt inbegrepen",
+        address: "Est. Principal de Itacimirim 60 (Lot. Sta Maria), Itacimirim",
+        phone: "+55 71 99630 9030",
+        res: "",
+        checkin: "15:00", checkout: "12:00",
+        url: "https://www.google.com/maps/search/?api=1&query=Pousada+Praia+das+Ondas+Itacimirim",
+        note: "Late check-out is niet inbegrepen. Vraag het zelf bij de receptie; lukt het niet, dan kamer uit om 12:00 en bagage achterlaten tot de transfer van 19:45."
+      },
+      intro: "Vier strandnachten om af te sluiten. Voormalig vissersdorp, kleinschalig.",
+      todo: [
+        { title: "Projeto Tamar", note: "Schildpaddenproject midden in het dorp." },
+        { title: "Walvissen spotten", note: "Juli t/m oktober trekken bultruggen langs de kust." },
+        { title: "Tocht door mangroves en jungle", note: "Kans op apen." }
+      ]
+    }
+  ],
+
+  /* ---- 1c. Vluchten ------------------------------------------------------
+     'who' laat je leeg als het voor iedereen geldt.
+     'plus' zet je op 1 als je de volgende dag aankomt.
+  ------------------------------------------------------------------------ */
+  flights: [
+    { date:"2026-07-11", airline:"TAP Air Portugal", nr:"TP673",  from:"AMS", to:"LIS", dep:"19:40", arr:"21:50", plus:0, ref:"YN2HW7",  checkin:"https://www.flytap.com" },
+    { date:"2026-07-11", airline:"TAP Air Portugal", nr:"TP75",   from:"LIS", to:"GIG", dep:"23:25", arr:"05:20", plus:1, ref:"YN2HW7",  checkin:"https://www.flytap.com" },
+    { date:"2026-07-16", airline:"LATAM",            nr:"LA3339", from:"GIG", to:"GRU", dep:"05:00", arr:"06:15", plus:0, ref:"EOGIVR",  checkin:"https://www.latamairlines.com" },
+    { date:"2026-07-16", airline:"LATAM",            nr:"LA3534", from:"GRU", to:"CGR", dep:"07:35", arr:"08:25", plus:0, ref:"EOGIVR",  checkin:"https://www.latamairlines.com" },
+    { date:"2026-07-19", airline:"GOL",              nr:"G31479", from:"CGR", to:"GRU", dep:"18:25", arr:"21:05", plus:0, ref:"DPGMBW",  checkin:"https://www.voegol.com.br" },
+    { date:"2026-07-19", airline:"GOL",              nr:"G31544", from:"GRU", to:"MAO", dep:"22:40", arr:"01:30", plus:1, ref:"DPGMBW",  checkin:"https://www.voegol.com.br" },
+    { date:"2026-07-25", airline:"LATAM",            nr:"LA3469", from:"MAO", to:"GRU", dep:"11:35", arr:"16:30", plus:0, ref:"EQTRBE",  checkin:"https://www.latamairlines.com", who:"Maura & Thijs" },
+    { date:"2026-07-25", airline:"LATAM",            nr:"LA8114", from:"GRU", to:"BCN", dep:"18:10", arr:"09:40", plus:1, ref:"EQTRBE",  checkin:"https://www.latamairlines.com", who:"Maura & Thijs" },
+    { date:"2026-07-25", airline:"LATAM",            nr:"LA3297", from:"MAO", to:"GRU", dep:"16:20", arr:"21:15", plus:0, ref:"DNGXBU",  checkin:"https://www.latamairlines.com", who:"Robert, Heleen, Jasmijn & Bob" },
+    { date:"2026-07-25", airline:"LATAM",            nr:"LA3206", from:"GRU", to:"IGU", dep:"22:20", arr:"00:05", plus:1, ref:"DNGXBU",  checkin:"https://www.latamairlines.com", who:"Robert, Heleen, Jasmijn & Bob" },
+    { date:"2026-07-28", airline:"LATAM",            nr:"LA3461", from:"IGU", to:"BSB", dep:"17:15", arr:"19:15", plus:0, ref:"DNGXBU",  checkin:"https://www.latamairlines.com" },
+    { date:"2026-07-28", airline:"LATAM",            nr:"LA3995", from:"BSB", to:"SSA", dep:"20:40", arr:"22:30", plus:0, ref:"DNGXBU",  checkin:"https://www.latamairlines.com" },
+    { date:"2026-08-04", airline:"TAP Air Portugal", nr:"TP28",   from:"SSA", to:"LIS", dep:"23:45", arr:"12:05", plus:1, ref:"YN2HW7",  checkin:"https://www.flytap.com" },
+    { date:"2026-08-05", airline:"TAP Air Portugal", nr:"TP672",  from:"LIS", to:"AMS", dep:"14:35", arr:"18:40", plus:0, ref:"YN2HW7",  checkin:"https://www.flytap.com" }
+  ],
+
+  /* ---- 1c-bis. Transfers -------------------------------------------------
+     'stop' is het nummer van de stop zoals het in de app staat (1 = eerste).
+     'wa' is een WhatsApp-nummer; het wordt automatisch een tikbare link.
+  ------------------------------------------------------------------------ */
+  transfers: [
+    { stop:1, date:"2026-07-12", dir:"aan", title:"Luchthaven → hotel, met Engelstalige gids",
+      from:"Rio de Janeiro Galeão (GIG)", to:"Copa Sul", time:"", flight:"TP 75, landt 05:20",
+      operator:"Ideia Tours Rio de Janeiro", wa:"+55 21 97293 5456", note:"" },
+    { stop:1, date:"2026-07-16", dir:"uit", title:"Hotel → luchthaven, Portugeestalige chauffeur",
+      from:"Copa Sul", to:"Rio de Janeiro Galeão (GIG)", time:"02:00", flight:"LA 3339, vertrekt 05:00",
+      operator:"Ideia Tours Rio de Janeiro", wa:"+55 21 97293 5456", note:"Midden in de nacht ophalen." },
+    { stop:2, date:"2026-07-16", dir:"aan", title:"Campo Grande → lodge in Miranda (250 km)",
+      from:"Campo Grande (CGR)", to:"Fazenda San Francisco", time:"", flight:"LA 3534, landt 08:20",
+      operator:"Bonito Way", wa:"+55 67 98469 1184", note:"Rijtijd ongeveer 3.5 uur." },
+    { stop:2, date:"2026-07-19", dir:"uit", title:"Lodge → Campo Grande (250 km)",
+      from:"Fazenda San Francisco", to:"Campo Grande (CGR)", time:"13:00", flight:"G3 1479, vertrekt 18:35",
+      operator:"Bonito Way", wa:"+55 67 98469 1184", note:"Let op: de voucher noemt 18:35, het reisschema 18:25. Check de app van GOL." },
+    { stop:3, date:"2026-07-20", dir:"aan", title:"Luchthaven → hotel, met Engelstalige gids",
+      from:"Manaus (MAO)", to:"Blue Tree Premium Manaus", time:"", flight:"G3 1544, landt 01:30",
+      operator:"Amazon Ecosight", wa:"+55 92 98117 1819", note:"Aankomst in de vroege uren van 20 juli." },
+    { stop:4, date:"2026-07-20", dir:"aan", title:"Hotel → Amazon Eco Lodge",
+      from:"Blue Tree Premium Manaus", to:"Amazon Eco Lodge", time:"09:00", flight:"",
+      operator:"Amazon Eco Lodge", wa:"+55 92 99362 8984",
+      note:"Gedeelde transfer: reken op ongeveer een uur wachten en onderweg extra opstapplekken." },
+    { stop:5, date:"2026-07-25", dir:"uit", title:"Hotel → luchthaven, met Engelstalige gids",
+      from:"Blue Tree Premium Manaus", to:"Manaus (MAO)", time:"09:00", flight:"LA 3469, vertrekt 11:35",
+      operator:"Amazon Ecosight", wa:"+55 92 98117 1819", who:"Maura & Thijs" },
+    { stop:5, date:"2026-07-25", dir:"uit", title:"Hotel → luchthaven, met Engelstalige gids",
+      from:"Blue Tree Premium Manaus", to:"Manaus (MAO)", time:"14:00", flight:"LA 3297, vertrekt 16:20",
+      operator:"Amazon Ecosight", wa:"+55 92 98117 1819", who:"Robert, Heleen, Jasmijn & Bob" },
+    { stop:6, date:"2026-07-25", dir:"aan", title:"Luchthaven → hotel, met Engelstalige gids",
+      from:"Foz do Iguaçu (IGU)", to:"Vivaz Cataratas Resort", time:"", flight:"LA 3206, landt 00:05",
+      operator:"Convênio Turismo", wa:"+55 45 99976 5036", note:"Aankomst in de vroege uren." },
+    { stop:6, date:"2026-07-28", dir:"uit", title:"Hotel → luchthaven, met Engelstalige gids",
+      from:"Vivaz Cataratas Resort", to:"Foz do Iguaçu (IGU)", time:"15:00", flight:"LA 3461, vertrekt 17:15",
+      operator:"Convênio Turismo", wa:"+55 45 99976 5036", note:"" },
+    { stop:7, date:"2026-07-28", dir:"aan", title:"Luchthaven → hotel, met gids",
+      from:"Salvador (SSA)", to:"Hotel da Bahia by Wish", time:"", flight:"LA 3995, landt 22:30",
+      operator:"Tours Bahia", wa:"+55 71 99617 8351", note:"" },
+    { stop:8, date:"2026-07-31", dir:"aan", title:"Salvador → Itacimirim, Portugeestalige chauffeur",
+      from:"Hotel da Bahia by Wish", to:"Pousada Praia das Ondas", time:"12:00", flight:"",
+      operator:"Tours Bahia", wa:"+55 71 99617 8351", note:"" },
+    { stop:8, date:"2026-08-04", dir:"uit", title:"Itacimirim → luchthaven, Portugeestalige chauffeur",
+      from:"Pousada Praia das Ondas", to:"Salvador (SSA)", time:"19:45", flight:"TP 28, vertrekt 23:45",
+      operator:"Tours Bahia", wa:"+55 71 99617 8351", note:"62 km, reken op 1 tot 2 uur." }
+  ],
+
+  /* ---- 1c-ter. Lokale agenten ------------------------------------------- */
+  agents: [
+    { name:"Ideia Tours (hoofdkantoor)", where:"Ma–vr 08:00–18:00",
+      phone:"+55 81 2128 0900", wa:"+55 81 99965 6809", wa2:"+55 81 98238 1601" },
+    { name:"Ideia Tours Rio de Janeiro", where:"R. Siqueira Campos 43, Copacabana",
+      phone:"+55 21 3281 3210", wa:"+55 21 97293 5456" },
+    { name:"Bonito Way", where:"Pantanal · Rua General Osório 865, Bonito",
+      phone:"+55 67 3255 1046", wa:"+55 67 99933 3334" },
+    { name:"Amazon Ecosight", where:"Manaus · Alameda Líbia 41, Ponta Negra",
+      phone:"+55 92 3673 9346", wa:"+55 92 98117 1819" },
+    { name:"Convênio Turismo", where:"Foz do Iguaçu · Rua das Paineiras 480",
+      phone:"+55 45 3523 3500", wa:"+55 45 99975 1916" },
+    { name:"Tours Bahia", where:"Salvador · Rua Alaíde do Feijão 5, Pelourinho",
+      phone:"+55 71 3599 5853", wa:"+55 71 99617 8351" }
+  ],
+
+  /* ---- 1d. Boekingen, vouchers en losse links --------------------------- */
+  bookings: [
+    { group:"Excursies", title:"Fietstocht Rio de Janeiro (Baja Bikes)", ref:"ARIO1117120",
+      detail:"14 juli, 09:00 uur — 15 min van tevoren aanwezig. R. Barata Ribeiro 302, Copacabana. Duur ca. 3 uur. Meenemen: water, camera.", url:"" },
+    { group:"Excursies", title:"Transfers & lokale agent (Ideia Tours)", ref:"WRTM113212",
+      detail:"Vertegenwoordiger staat klaar met bordje Ideia / Tenzing Travel / je eigen naam.", url:"" },
+    { group:"Zelf regelen", title:"Online inchecken", ref:"",
+      detail:"Kan vanaf 24 uur (soms 48 uur) voor vertrek. Boardingpassen downloaden op de telefoon.", url:"" },
+    { group:"Zelf regelen", title:"Reis- en annuleringsverzekering", ref:"POLISNUMMER",
+      detail:"Polisnummer en alarmcentrale hier invullen.", url:"" },
+    { group:"Zelf regelen", title:"Parkeren Schiphol", ref:"",
+      detail:"Reserveringsnummer hier invullen.", url:"https://www.schiphol.nl" }
+  ],
+
+  /* ---- 1e. Reizigers -----------------------------------------------------
+     Zet hier GEEN volledige paspoortnummers in als je dit bestand deelt of
+     online zet. Zie de waarschuwing onderaan het tabblad Reizigers.
+  ------------------------------------------------------------------------ */
+  travelers: [
+    { name:"Robert Munnichs",  dob:"", passport:"", passportExp:"", license:"", insurance:"", insurancePolicy:"",
+      vaccinations:"DTP · Hep A", meds:"", note:"" },
+    { name:"Heleen Greuters",  dob:"", passport:"", passportExp:"", license:"", insurance:"", insurancePolicy:"",
+      vaccinations:"DTP · Hep A", meds:"", note:"" },
+    { name:"Jasmijn Munnichs", dob:"", passport:"", passportExp:"", license:"—", insurance:"", insurancePolicy:"",
+      vaccinations:"DTP · Hep A", meds:"", note:"" },
+    { name:"Bob Munnichs",     dob:"", passport:"", passportExp:"", license:"—", insurance:"", insurancePolicy:"",
+      vaccinations:"DTP · Hep A", meds:"", note:"" },
+    { name:"Maura Munnichs",   dob:"", passport:"", passportExp:"", license:"", insurance:"", insurancePolicy:"",
+      vaccinations:"DTP · Hep A", meds:"", note:"Reist mee t/m 25 juli, dan terug via Barcelona." },
+    { name:"Thijs van der Veen", dob:"", passport:"", passportExp:"", license:"", insurance:"", insurancePolicy:"",
+      vaccinations:"DTP · Hep A", meds:"", note:"Reist mee t/m 25 juli, dan terug via Barcelona." }
+  ],
+
+  /* ---- 1f. Vaste checklist (verschijnt bij Reizigers) -------------------- */
+  checklist: [
+    "Paspoort minstens 6 maanden geldig bij binnenkomst",
+    "Creditcard op naam (borg hotels en huurauto)",
+    "Pinpas op werelddekking gezet",
+    "Wereldstekker",
+    "Kopie van alle documenten apart in hand- en ruimbagage",
+    "Muggenspray met hoog DEET-gehalte",
+    "Medicijnen in de handbagage"
+  ]
+};
+</script>
+
+<style>
+:root{
+  --bg:#EDE9E1;
+  --card:#FFFFFF;
+  --ink:#12343B;
+  --ink-soft:#5B7178;
+  --line:#D9D2C6;
+  --accent:#0F6E6E;
+  --hot:#DB6A33;
+  --stamp:#9E3B4F;
+  --radius:14px;
+  --tabbar:76px;
+  --shadow:0 1px 2px rgba(18,52,59,.06), 0 6px 18px rgba(18,52,59,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(var(--tabbar) + env(safe-area-inset-bottom));
+}
+h1,h2,h3,.face{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.01em}
+a{color:var(--accent)}
+button{font:inherit}
+
+/* ---------- header ---------- */
+header{
+  position:sticky; top:0; z-index:40;
+  background:var(--ink); color:#fff;
+  padding:14px 16px 12px; padding-top:calc(14px + env(safe-area-inset-top));
+}
+header .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8FB3B6}
+header h1{margin:2px 0 0;font-size:22px;font-weight:700}
+header .sub{font-size:13px;color:#A9C3C6;margin-top:2px}
+.progress{margin-top:10px;height:4px;background:rgba(255,255,255,.16);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--hot);border-radius:99px}
+.progress-label{font-size:11px;color:#8FB3B6;margin-top:6px;display:flex;justify-content:space-between}
+
+/* ---------- layout ---------- */
+main{padding:16px 14px 28px;max-width:720px;margin:0 auto}
+.panel{display:none}
+.panel.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.section-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:22px 2px 8px}
+.section-title:first-child{margin-top:0}
+
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.card-pad{padding:14px 15px}
+.muted{color:var(--ink-soft)}
+.small{font-size:13px}
+.tiny{font-size:11.5px}
+
+/* ---------- stop cards (tab Reisplan) ---------- */
+.stop{position:relative}
+.stop .bar{display:flex;align-items:baseline;gap:10px;padding:13px 15px 11px;border-bottom:1px solid var(--line)}
+.num{
+  font-family:"Space Grotesk";font-weight:700;font-size:12px;
+  background:var(--ink);color:#fff;border-radius:99px;
+  min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;
+  flex:none;align-self:center
+}
+.stop.now .num{background:var(--hot)}
+.stop .name{font-family:"Space Grotesk";font-weight:700;font-size:17px;flex:1}
+.stop .dates{font-size:12px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.badge{
+  display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--hot);color:#fff;border-radius:99px;padding:2px 8px;font-weight:600;vertical-align:2px
+}
+.badge.past{background:#B9B2A6}
+.badge.soon{background:var(--accent)}
+.stay{display:flex;gap:11px;padding:12px 15px;border-top:1px solid var(--line);align-items:flex-start}
+.stay .ico{flex:none;width:22px;text-align:center;opacity:.55;font-size:15px}
+.stay b{font-weight:600}
+.nights{font-size:11.5px;color:var(--ink-soft)}
+
+/* ---------- dagenlint in stopkaart ---------- */
+.ribbon{display:flex;gap:5px;padding:11px 15px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ribbon::-webkit-scrollbar{display:none}
+.rd{
+  flex:none;min-width:38px;border-radius:9px;padding:5px 6px 6px;text-align:center;
+  background:#F4F1EA;border:1px solid var(--line);line-height:1.15
+}
+.rd em{display:block;font-style:normal;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.rd b{font-family:"Space Grotesk";font-size:14px;font-variant-numeric:tabular-nums}
+.rd.edge{background:#fff;border-style:dashed}
+.rd.today{background:var(--hot);border-color:var(--hot);color:#fff}
+.rd.today em{color:rgba(255,255,255,.8)}
+
+/* ---------- transfers ---------- */
+.tr-head{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+  padding:11px 15px 3px;border-top:1px solid var(--line);background:#FAF8F4
+}
+.tr{display:flex;gap:12px;padding:9px 15px 12px;background:#FAF8F4}
+.tr + .tr{border-top:1px solid var(--line)}
+.tr-when{flex:none;width:62px;text-align:center}
+.tr-when b{display:block;font-family:"Space Grotesk";font-size:16px;font-variant-numeric:tabular-nums}
+.tr-when em{display:block;font-style:normal;font-size:11px;color:var(--ink-soft)}
+.dir{
+  display:inline-block;margin-top:4px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--accent);color:#fff;border-radius:99px;padding:2px 6px
+}
+.dir.uit{background:var(--ink-soft)}
+.tr-body{min-width:0;flex:1}
+.chips .op{
+  font-size:11.5px;color:var(--ink-soft);border:1px dashed var(--line);
+  border-radius:99px;padding:3px 9px;background:#fff
+}
+
+/* ---------- map ---------- */
+#map{height:58vh;min-height:320px;width:100%;background:#DDD8CE}
+.maplist a{display:flex;justify-content:space-between;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.maplist a:last-child{border-bottom:0}
+.maplist span:last-child{color:var(--ink-soft);font-size:12px;white-space:nowrap}
+.leaflet-container{font:inherit}
+.pin{
+  background:var(--ink);color:#fff;border-radius:99px;width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;font-family:"Space Grotesk";
+  font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)
+}
+.pin.now{background:var(--hot)}
+
+/* ---------- buttons ---------- */
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;padding:12px 15px 14px}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:99px;padding:8px 13px;font-size:13px;font-weight:500;
+  text-decoration:none;cursor:pointer
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.solid{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.solid:hover{background:#0B5B5B;color:#fff}
+.btn:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+
+/* ---------- accordion (tab Doen) ---------- */
+details{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+summary{
+  padding:14px 15px;cursor:pointer;list-style:none;
+  display:flex;align-items:center;gap:10px;font-family:"Space Grotesk";font-weight:700;font-size:16px
+}
+summary::-webkit-details-marker{display:none}
+summary .chev{margin-left:auto;color:var(--ink-soft);transition:transform .18s}
+details[open] summary .chev{transform:rotate(90deg)}
+.todo{padding:0 15px 4px}
+.todo li{list-style:none;padding:10px 0;border-top:1px solid var(--line)}
+.todo ul{margin:0;padding:0}
+.todo b{font-weight:600}
+.todo-head{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.tiny-btn{padding:5px 11px;font-size:12px;flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.chips a{
+  font-size:11.5px;text-decoration:none;color:var(--ink-soft);
+  border:1px solid var(--line);border-radius:99px;padding:3px 9px;background:#FAF8F4
+}
+.chips a:hover{color:var(--accent);border-color:var(--accent)}
+.chips a::after{content:" \2197";font-size:9px;opacity:.6}
+
+/* ---------- flights ---------- */
+.leg{display:flex;align-items:center;gap:12px;padding:12px 15px;border-top:1px solid var(--line)}
+.leg:first-of-type{border-top:0}
+.leg .t{font-family:"Space Grotesk";font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+.leg .code{font-size:11px;color:var(--ink-soft);letter-spacing:.08em}
+.leg .mid{flex:1;text-align:center;color:var(--ink-soft);font-size:11px}
+.leg .mid hr{border:0;border-top:1px solid var(--line);margin:5px 0}
+.sup{font-size:10px;vertical-align:super;color:var(--hot)}
+
+/* ---------- ref chips ---------- */
+.ref{
+  font-family:"Space Grotesk";font-weight:700;letter-spacing:.06em;
+  background:#F1EEE7;border:1px solid var(--line);border-radius:8px;
+  padding:3px 8px;font-size:13px;cursor:pointer
+}
+.ref:active{background:#E4DFD4}
+
+/* ---------- travelers ---------- */
+.kv{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;font-size:13.5px;padding:2px 0}
+.kv dt{color:var(--ink-soft)}
+.kv dd{margin:0;font-weight:500}
+.warn{
+  background:#FBF0E9;border:1px solid #EBC9B3;border-radius:var(--radius);
+  padding:12px 14px;font-size:13px;color:#7C4322
+}
+.check li{list-style:none;padding:9px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check ul{margin:0;padding:0 15px 6px}
+.check li:first-child{border-top:0}
+.box{flex:none;width:18px;height:18px;border:1.5px solid var(--ink-soft);border-radius:5px;margin-top:1px}
+.check li.done .box{background:var(--accent);border-color:var(--accent)}
+.check li.done span{text-decoration:line-through;color:var(--ink-soft)}
+
+/* ---------- tabbar ---------- */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:var(--ink);display:flex;
+  padding-bottom:env(safe-area-inset-bottom)
+}
+nav button{
+  flex:1;background:none;border:0;color:#7E9EA3;cursor:pointer;
+  padding:11px 2px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:10.5px;letter-spacing:.02em
+}
+nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+nav button[aria-selected="true"]{color:#fff}
+nav button[aria-selected="true"] svg{stroke:var(--hot)}
+
+@media (min-width:720px){
+  #map{height:52vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker" id="hOrg"></div>
+  <h1 id="hTitle"></h1>
+  <div class="sub" id="hSub"></div>
+  <div class="progress"><i id="hBar"></i></div>
+  <div class="progress-label"><span id="hLeft"></span><span id="hRight"></span></div>
+</header>
+
+<main>
+  <section class="panel" id="p-kaart" role="tabpanel"></section>
+  <section class="panel" id="p-plan"  role="tabpanel"></section>
+  <section class="panel" id="p-doen"  role="tabpanel"></section>
+  <section class="panel" id="p-docs"  role="tabpanel"></section>
+  <section class="panel" id="p-wie"   role="tabpanel"></section>
+</main>
+
+<nav role="tablist" aria-label="Onderdelen">
+  <button role="tab" data-tab="kaart" aria-selected="false">
+    <svg viewBox="0 0 24 24"><path d="M9 3 3 6v15l6-3 6 3 6-3V3l-6 3-6-3Z"/><path d="M9 3v15M15 6v15"/></svg>Kaart</button>
+  <button role="tab" data-tab="plan" aria-selected="true">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Reisplan</button>
+  <button role="tab" data-tab="doen" aria-selected="false">
+    <svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-7-10a7 7 0 0 1 14 0c0 5.4-7 10-7 10Z"/><circle cx="12" cy="11" r="2.5"/></svg>Doen</button>
+  <button role="tab" data-tab="docs" aria-selected="false">
+    <svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Documenten</button>
+  <button role="tab" data-tab="wie" aria-selected="false">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>Reizigers</button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+/* ==========================================================================
+   2. MOTOR — hier hoef je niets aan te veranderen
+   ========================================================================== */
+const $ = (s,r=document)=>r.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const d   = s => new Date(s+"T12:00:00");
+const TODAY = new Date();
+
+const fmt = (s,opt={day:'numeric',month:'short'}) =>
+  d(s).toLocaleDateString('nl-NL',opt);
+const nights = (a,b) => Math.round((d(b)-d(a))/864e5);
+const status = (a,b) => TODAY < d(a) ? 'future' : TODAY > d(b) ? 'past' : 'now';
+
+/* ---------- header ---------- */
+(function header(){
+  const t = TRIP.trip;
+  $('#hOrg').textContent   = t.organiser || '';
+  $('#hTitle').textContent = t.title;
+  $('#hSub').textContent   = t.subtitle;
+  const total = nights(t.start,t.end);
+  const done  = Math.min(Math.max(Math.round((TODAY-d(t.start))/864e5),0),total);
+  $('#hBar').style.width = (total? done/total*100:0)+'%';
+  $('#hLeft').textContent  = fmt(t.start,{day:'numeric',month:'long',year:'numeric'});
+  $('#hRight').textContent = fmt(t.end,{day:'numeric',month:'long',year:'numeric'});
+  const dl = Math.ceil((d(t.start)-TODAY)/864e5);
+  if(dl>0) $('#hSub').textContent = t.subtitle+' · nog '+dl+' dag'+(dl===1?'':'en');
+  else if(TODAY<=d(t.end)) $('#hSub').textContent = t.subtitle+' · dag '+(done+1)+' van '+(total+1);
+})();
+
+/* ---------- 2a. Tab Reisplan ---------- */
+const STOPC = ['#0F6E6E','#DB6A33','#4C6EA8','#7A5EA6','#2F8A5B','#B08327','#9E3B4F','#3E7C9B'];
+const stopColor = i => STOPC[i % STOPC.length];
+const tint = (hex,a) => {
+  const n = parseInt(hex.slice(1),16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+};
+const iso = dt => dt.toISOString().slice(0,10);
+/* nummers worden overal met spaties genoteerd; links hebben alleen cijfers nodig */
+const tel = n => String(n||'').replace(/[^\d+]/g,'');
+const FLIGHTDAYS = new Set(TRIP.flights.map(f=>f.date));
+const isToday = dt => iso(dt) === iso(TODAY);
+
+/* welke stop hoort bij een dag: daar waar je die nacht slaapt */
+function stopOfDay(dt){
+  for(let i=0;i<TRIP.stops.length;i++){
+    if(dt >= d(TRIP.stops[i].from) && dt < d(TRIP.stops[i].to)) return i;
+  }
+  const last = TRIP.stops.length-1;
+  if(+dt === +d(TRIP.stops[last].to)) return last;
+  return -1;
+}
+
+/* lint met de losse dagen van één stop */
+function ribbon(s,i){
+  const out = [];
+  for(let dt=new Date(d(s.from)); dt<=d(s.to); dt.setDate(dt.getDate()+1)){
+    const day = new Date(dt);
+    const edge = +day === +d(s.to);
+    out.push(`<span class="rd ${edge?'edge':''} ${isToday(day)?'today':''}"
+        style="${edge?'':`background:${tint(stopColor(i),.15)};border-color:${tint(stopColor(i),.35)}`}">
+        <em>${day.toLocaleDateString('nl-NL',{weekday:'short'}).slice(0,2)}</em>
+        <b>${day.getDate()}</b></span>`);
+  }
+  return `<div class="ribbon">${out.join('')}</div>`;
+}
+
+function renderPlan(){
+  const html = TRIP.stops.map((s,i)=>{
+    const st = status(s.from,s.to);
+    const tag = st==='now' ? '<span class="badge">nu</span>'
+             : st==='past'? '<span class="badge past">geweest</span>' : '';
+    const y = s.stay || {};
+    const inout = [
+      y.checkin ? `vanaf ${y.checkin}` : '',
+      y.checkout? `uiterlijk ${y.checkout}` : ''
+    ];
+    const stay = y.name ? `
+      <div class="stay">
+        <div class="ico">&#127976;</div>
+        <div style="min-width:0;flex:1">
+          <div class="todo-head"><b>${esc(y.name)}</b>
+            ${y.res?`<button class="ref" data-copy="${esc(y.res)}">${esc(y.res.split(' ')[0])}</button>`:''}</div>
+          <div class="small muted">${esc(y.board||'')}</div>
+          ${y.address?`<div class="small muted">${esc(y.address)}</div>`:''}
+          <div class="nights" style="margin-top:5px">
+            Inchecken ${fmt(s.from)}${inout[0]?' '+inout[0]:''} · uitchecken ${fmt(s.to)}${inout[1]?' '+inout[1]:''}</div>
+          ${y.note?`<div class="small" style="margin-top:6px">${esc(y.note)}</div>`:''}
+          <div class="chips">
+            ${y.phone?`<a href="tel:${tel(y.phone)}">Bellen</a>`:''}
+            ${y.wa?`<a href="https://wa.me/${tel(y.wa)}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+            ${y.url?`<a href="${y.url}" target="_blank" rel="noopener">Kaart</a>`:''}
+          </div>
+        </div>
+      </div>` : '';
+
+    const trs = TRIP.transfers.filter(t=>t.stop===i+1).map(t=>`
+      <div class="tr">
+        <div class="tr-when">
+          <b>${t.time||'—'}</b><em>${fmt(t.date)}</em>
+          <span class="dir ${t.dir==='uit'?'uit':''}">${t.dir==='uit'?'vertrek':'aankomst'}</span>
+        </div>
+        <div class="tr-body">
+          <b>${esc(t.title)}</b>
+          <div class="small muted">${esc(t.from)} &rarr; ${esc(t.to)}</div>
+          ${t.flight?`<div class="tiny muted">${esc(t.flight)}</div>`:''}
+          ${t.who?`<div class="tiny" style="color:var(--stamp)">Alleen ${esc(t.who)}</div>`:''}
+          ${t.note?`<div class="small" style="margin-top:4px">${esc(t.note)}</div>`:''}
+          <div class="chips">
+            <span class="op">${esc(t.operator)}</span>
+            ${t.wa?`<a href="https://wa.me/${tel(t.wa)}" target="_blank" rel="noopener">WhatsApp</a>
+                   <a href="tel:${tel(t.wa)}">Bellen</a>`:''}
+          </div>
+        </div>
+      </div>`).join('');
+    const transfers = trs ? `<div class="tr-head">Vervoer</div>${trs}` : '';
+    const links = `<a class="btn" href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" rel="noopener">Route hierheen</a>`;
+    return `
+    <article class="card stop ${st==='now'?'now':''}" id="stop-${i}">
+      <div class="bar">
+        <span class="num" style="background:${stopColor(i)}">${i+1}</span>
+        <span class="name">${esc(s.name)} ${tag}</span>
+        <span class="dates">${nights(s.from,s.to)} nacht${nights(s.from,s.to)===1?'':'en'}</span>
+      </div>
+      ${ribbon(s,i)}
+      ${s.intro?`<div class="card-pad small" style="padding-top:2px">${esc(s.intro)}</div>`:''}
+      ${stay}
+      ${transfers}
+      <div class="btnrow">${links}</div>
+    </article>`;
+  }).join('');
+  $('#p-plan').innerHTML = `<div class="section-title">Waar je slaapt</div>${html}`;
+}
+
+/* ---------- 2b. Tab Kaart ---------- */
+let map, mapReady=false;
+function renderMap(){
+  $('#p-kaart').innerHTML = `
+    <div class="card"><div id="map"></div></div>
+    <div class="card maplist" id="maplist"></div>
+    <div class="btnrow" style="padding-left:2px">
+      <a class="btn solid" id="allroute" target="_blank" rel="noopener">Hele route in Google Maps</a>
+    </div>`;
+  $('#maplist').innerHTML = TRIP.stops.map((s,i)=>`
+    <a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" rel="noopener">
+      <span><b>${i+1}.</b> ${esc(s.name)}</span><span>${fmt(s.from)} – ${fmt(s.to)}</span>
+    </a>`).join('');
+
+  const pts = TRIP.stops.map(s=>[s.lat,s.lng]);
+  const o = pts[0], dst = pts[pts.length-1], way = pts.slice(1,-1).slice(0,9);
+  $('#allroute').href = `https://www.google.com/maps/dir/?api=1&origin=${o}&destination=${dst}`+
+    (way.length?`&waypoints=${way.map(p=>p.join(',')).join('|')}`:'');
+
+  if(typeof L === 'undefined'){ $('#map').innerHTML =
+    '<div style="padding:24px;text-align:center" class="muted small">Kaart heeft internet nodig. De lijst hieronder werkt altijd.</div>';
+    return; }
+  if(mapReady){ map.invalidateSize(); return; }
+  map = L.map('map',{scrollWheelZoom:false}).setView(pts[0],4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:18, attribution:'&copy; OpenStreetMap'
+  }).addTo(map);
+  L.polyline(pts,{color:'#12343B',weight:2,dashArray:'4 6',opacity:.7}).addTo(map);
+  TRIP.stops.forEach((s,i)=>{
+    const now = status(s.from,s.to)==='now';
+    L.marker([s.lat,s.lng],{icon:L.divIcon({
+      className:'', html:`<div class="pin ${now?'now':''}">${i+1}</div>`,
+      iconSize:[26,26], iconAnchor:[13,13]
+    })}).addTo(map).bindPopup(
+      `<b>${esc(s.name)}</b><br>${fmt(s.from)} – ${fmt(s.to)}<br>${esc(s.stay?s.stay.name:'')}`);
+  });
+  map.fitBounds(L.latLngBounds(pts).pad(.15));
+  mapReady = true;
+}
+
+/* ---------- 2c. Tab Doen ---------- */
+const q = t => encodeURIComponent(t);
+
+/* Zoeklinks. GetYourGuide en Tripadvisor gebruiken interne id's in hun
+   diepe links, dus we sturen je naar hun zoekresultaat op naam. Heb je de
+   juiste tour gevonden? Plak de link dan in 'url' bij dat item, dan
+   verschijnt er een directe Boeken-knop. */
+const SOURCES = [
+  { id:'gyg',  label:'GetYourGuide', url:t=>`https://www.getyourguide.nl/s/?q=${q(t)}` },
+  { id:'ta',   label:'Tripadvisor',  url:t=>`https://www.tripadvisor.nl/Search?q=${q(t)}` },
+  { id:'via',  label:'Viator',       url:t=>`https://www.viator.com/searchResults/all?text=${q(t)}` }
+];
+
+function renderDoen(){
+  $('#p-doen').innerHTML = `
+    <div class="section-title">Per bestemming</div>` +
+    TRIP.stops.map((s,i)=>{
+      const items = (s.todo||[]).map(t=>{
+        const term = `${t.title} ${s.name}`;
+        const book = t.url
+          ? `<a class="btn solid tiny-btn" href="${t.url}" target="_blank" rel="noopener">Boeken</a>`
+          : '';
+        const chips = SOURCES.map(src=>
+          `<a href="${src.url(term)}" target="_blank" rel="noopener">${src.label}</a>`).join('') +
+          `<a href="https://www.google.com/maps/search/?api=1&query=${q(term)}" target="_blank" rel="noopener">Kaart</a>`;
+        return `
+        <li>
+          <div class="todo-head">
+            <b>${esc(t.title)}</b>
+            ${book}
+          </div>
+          ${t.note?`<div class="small muted">${esc(t.note)}</div>`:''}
+          <div class="chips">${chips}</div>
+        </li>`;
+      }).join('');
+      return `
+      <details ${status(s.from,s.to)==='now'?'open':''}>
+        <summary><span class="num" style="background:${stopColor(i)}">${i+1}</span>${esc(s.name)}<span class="chev">&rsaquo;</span></summary>
+        ${items?`<div class="todo"><ul>${items}</ul></div>`:
+                `<div class="card-pad small muted">Nog niets op de shortlist.</div>`}
+        <div class="btnrow" style="border-top:1px solid var(--line)">
+          <span class="tiny muted" style="width:100%;margin-bottom:2px">Alles in ${esc(s.name)}:</span>
+          ${SOURCES.map(src=>`<a class="btn" target="_blank" rel="noopener" href="${src.url(s.name)}">${src.label}</a>`).join('')}
+          <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/bezienswaardigheden/@${s.lat},${s.lng},13z">In de buurt</a>
+        </div>
+      </details>`;
+    }).join('') + `
+    <div class="card card-pad small muted">
+      De knoppen openen het zoekresultaat op naam. Heb je de goede tour te pakken?
+      Zet de link in <b>url</b> bij dat item in de code, dan staat er voortaan een
+      Boeken-knop en hoef je nooit meer te zoeken.
+    </div>`;
+}
+
+/* ---------- 2d. Tab Documenten ---------- */
+function renderDocs(){
+  const byDate = {};
+  TRIP.flights.forEach(f=>(byDate[f.date] ||= []).push(f));
+
+  const flights = Object.keys(byDate).sort().map(date=>{
+    const legs = byDate[date].map(f=>`
+      <div class="leg">
+        <div><div class="t">${f.dep}</div><div class="code">${f.from}</div></div>
+        <div class="mid">${esc(f.airline)} ${f.nr}<hr>&#9992;</div>
+        <div style="text-align:right"><div class="t">${f.arr}${f.plus?'<span class="sup">+1</span>':''}</div><div class="code">${f.to}</div></div>
+      </div>
+      ${f.who?`<div class="tiny muted" style="padding:0 15px 8px">${esc(f.who)}</div>`:''}`).join('');
+    const f0 = byDate[date][0];
+    return `<article class="card">
+      <div class="card-pad" style="border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <b>${fmt(date,{weekday:'short',day:'numeric',month:'long'})}</b>
+        ${f0.ref?`<button class="ref" data-copy="${f0.ref}">${f0.ref}</button>`:''}
+      </div>
+      ${legs}
+      ${f0.checkin?`<div class="btnrow"><a class="btn solid" href="${f0.checkin}" target="_blank" rel="noopener">Inchecken</a></div>`:''}
+    </article>`;
+  }).join('');
+
+  const groups = {};
+  TRIP.bookings.forEach(b=>(groups[b.group] ||= []).push(b));
+  const books = Object.keys(groups).map(g=>`
+    <div class="section-title">${esc(g)}</div>` +
+    groups[g].map(b=>`
+      <article class="card card-pad">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+          <b>${esc(b.title)}</b>
+          ${b.ref?`<button class="ref" data-copy="${esc(b.ref)}">${esc(b.ref)}</button>`:''}
+        </div>
+        ${b.detail?`<div class="small muted" style="margin-top:5px">${esc(b.detail)}</div>`:''}
+        ${b.url?`<div style="margin-top:9px"><a class="btn" href="${b.url}" target="_blank" rel="noopener">Openen</a></div>`:''}
+      </article>`).join('')).join('');
+
+  const agents = (TRIP.agents||[]).map(a=>`
+    <div class="leg" style="align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <b>${esc(a.name)}</b>
+        ${a.where?`<div class="tiny muted">${esc(a.where)}</div>`:''}
+        <div class="chips">
+          ${a.phone?`<a href="tel:${tel(a.phone)}">${esc(a.phone)}</a>`:''}
+          ${a.wa?`<a href="https://wa.me/${tel(a.wa)}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+          ${a.wa2?`<a href="https://wa.me/${tel(a.wa2)}" target="_blank" rel="noopener">WhatsApp 2</a>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+
+  $('#p-docs').innerHTML =
+    `<div class="section-title">Vluchten</div>${flights}${books}
+     ${agents?`<div class="section-title">Lokale agenten</div><article class="card">${agents}</article>`:''}
+     <div class="card card-pad small muted">Tik op een boekingscode om te kopiëren.</div>`;
+}
+
+/* ---------- 2e. Tab Reizigers ---------- */
+function renderWie(){
+  const row = (k,v)=> v ? `<dt>${k}</dt><dd>${esc(v)}</dd>` : '';
+  const people = TRIP.travelers.map(p=>`
+    <article class="card card-pad">
+      <b style="font-family:'Space Grotesk';font-size:16px">${esc(p.name)}</b>
+      <dl class="kv" style="margin:8px 0 0">
+        ${row('Geboortedatum',p.dob)}
+        ${row('Paspoort',p.passport)}
+        ${row('Geldig tot',p.passportExp)}
+        ${row('Rijbewijs',p.license)}
+        ${row('Zorgverzekering',p.insurance)}
+        ${row('Polisnummer',p.insurancePolicy)}
+        ${row('Vaccinaties',p.vaccinations)}
+        ${row('Medicijnen',p.meds)}
+        ${row('Notitie',p.note)}
+      </dl>
+    </article>`).join('');
+
+  const em = TRIP.trip.emergency.map(e=>`
+    <div class="leg" style="justify-content:space-between">
+      <span>${esc(e.label)}</span>
+      ${e.tel?`<a href="tel:${e.tel}"><b>${esc(e.value)}</b></a>`:`<b>${esc(e.value)}</b>`}
+    </div>`).join('');
+
+  const check = TRIP.checklist.map(c=>`<li><span class="box"></span><span>${esc(c)}</span></li>`).join('');
+
+  $('#p-wie').innerHTML = `
+    <div class="section-title">Wie gaat er mee</div>${people}
+    <div class="section-title">Voor vertrek</div>
+    <article class="card check"><ul>${check}</ul></article>
+    <div class="section-title">Bij problemen</div>
+    <article class="card">${em}</article>
+    <div class="section-title">Let op</div>
+    <div class="warn">Dit bestand staat gewoon op je telefoon of laptop, zonder wachtwoord.
+      Zet er dus geen volledige paspoortnummers of scans in als je het deelt of online zet.
+      Een foto van je paspoort in een afgeschermde cloudmap, met hier alleen de link, is veiliger.</div>`;
+
+  $('#p-wie').querySelectorAll('.check li').forEach(li=>
+    li.addEventListener('click',()=>li.classList.toggle('done')));
+}
+
+/* ---------- kopieerknoppen ---------- */
+document.addEventListener('click',e=>{
+  const b = e.target.closest('[data-copy]'); if(!b) return;
+  navigator.clipboard?.writeText(b.dataset.copy);
+  const old = b.textContent; b.textContent = 'gekopieerd';
+  setTimeout(()=>b.textContent = old, 1200);
+});
+
+/* ---------- tabs ---------- */
+const PANELS = {kaart:'#p-kaart', plan:'#p-plan', doen:'#p-doen', docs:'#p-docs', wie:'#p-wie'};
+function show(tab){
+  Object.values(PANELS).forEach(s=>$(s).classList.remove('active'));
+  $(PANELS[tab]).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>
+    b.setAttribute('aria-selected', b.dataset.tab===tab));
+  if(tab==='kaart') setTimeout(renderMap,30);
+  location.hash = tab;
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>
+  b.addEventListener('click',()=>show(b.dataset.tab)));
+
+renderPlan(); renderDoen(); renderDocs(); renderWie();
+show(Object.keys(PANELS).includes(location.hash.slice(1)) ? location.hash.slice(1) : 'plan');
+</script>
+</body>
+</html>
